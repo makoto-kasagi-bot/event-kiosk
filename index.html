@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>展示車両ガイド</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;700&family=Barlow+Condensed:wght@500;700&display=swap">
+<style>
+/* 縦置きタッチ用。9:16 の1画面に収め、操作ボタンは手が届く下側に集める。屋外・明るい会場向けに単一テーマ */
+:root{
+  --bg:#E8EDE9;      /* 朝霧 */
+  --ink:#13241D;     /* 松の深緑 */
+  --panel:#FFFFFF;
+  --accent:#F0B323;  /* キャンプサインの琥珀 */
+  --line:#C6D1CA;
+  --muted:#56675E;
+  --f-disp:"Dela Gothic One","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+  --f-num:"Barlow Condensed","Arial Narrow","Hiragino Sans",sans-serif;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:#0c1612;color:var(--ink);font-family:var(--f-body);display:flex;justify-content:center;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px));
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overflow:hidden}
+.frame{height:100%;aspect-ratio:9/16;max-width:100%;background:var(--bg);container-type:size;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;position:relative}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:.6cqw solid var(--accent);outline-offset:.4cqw}
+
+/* ヘッダー */
+.top{background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:3cqw;padding:3.2cqw 5cqw}
+.top h1{font-family:var(--f-disp);font-weight:400;font-size:5.2cqw;letter-spacing:.04em;margin:0}
+.top h1 b{color:var(--accent);font-weight:400}
+.tag{font-size:2.4cqw;border:.25cqw solid var(--accent);color:var(--accent);padding:.6cqw 2cqw;border-radius:99px;letter-spacing:.08em;white-space:nowrap}
+
+main{overflow-y:auto;overscroll-behavior:contain;padding:5cqw;display:flex;flex-direction:column;gap:4cqw}
+main::-webkit-scrollbar{display:none}
+
+/* ホーム */
+.hero{display:flex;flex-direction:column;gap:2cqw;padding-block:4cqw 2cqw}
+.hero .eyebrow{font-size:3cqw;letter-spacing:.2em;color:var(--muted)}
+.hero h2{font-family:var(--f-disp);font-weight:400;font-size:10cqw;line-height:1.15;margin:0;text-wrap:balance}
+.hero p{font-size:3.6cqw;line-height:1.7;margin:0;color:var(--muted)}
+.tiles{display:grid;gap:4cqw}
+.tile{display:grid;grid-template-columns:1fr auto;align-items:end;gap:3cqw;text-align:left;border-radius:3cqw;padding:6cqw;min-height:38cqw;position:relative;overflow:hidden;transition:transform .12s}
+.tile:active{transform:scale(.97)}
+.tile.new{background:var(--ink);color:var(--bg)}
+.tile.used{background:var(--accent);color:var(--ink)}
+.tile .k{font-size:3cqw;letter-spacing:.18em;opacity:.8}
+.tile .t{font-family:var(--f-disp);font-size:8.5cqw;line-height:1.2;margin-top:2cqw}
+.tile .n{font-family:var(--f-num);font-weight:700;font-size:16cqw;line-height:.8}
+.tile .n small{font-size:4cqw;margin-left:1cqw}
+.tile svg{position:absolute;right:-6cqw;top:3cqw;width:50cqw;opacity:.12;pointer-events:none}
+.touch{align-self:center;font-size:3.4cqw;color:var(--muted);display:flex;align-items:center;gap:2cqw;padding-top:2cqw}
+.touch i{width:3cqw;height:3cqw;border-radius:50%;background:var(--accent);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(240,179,35,.7)}100%{box-shadow:0 0 0 4cqw rgba(240,179,35,0)}}
+
+/* 一覧 */
+.head{display:flex;flex-direction:column;gap:1cqw}
+.head .eyebrow{font-size:2.8cqw;letter-spacing:.2em;color:var(--muted)}
+.head h2{font-family:var(--f-disp);font-weight:400;font-size:7.5cqw;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:2cqw}
+.chip{font-size:3.4cqw;padding:2.2cqw 4cqw;border-radius:99px;background:var(--panel);border:.3cqw solid var(--line);font-weight:700}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.list{display:grid;gap:3cqw}
+.card{display:grid;grid-template-columns:30cqw 1fr;gap:4cqw;align-items:center;text-align:left;background:var(--panel);border-radius:2.4cqw;padding:3.5cqw;border:.25cqw solid var(--line);transition:transform .12s}
+.card:active{transform:scale(.98);border-color:var(--ink)}
+.thumb{aspect-ratio:4/3;max-width:100%;border-radius:1.6cqw;background:var(--bg);display:grid;place-items:center}
+.thumb svg{width:86%}
+.card .type{font-size:2.6cqw;letter-spacing:.12em;color:var(--muted)}
+.card .name{font-size:4.6cqw;font-weight:700;line-height:1.3;margin-block:.6cqw 1.6cqw}
+.meta{display:flex;flex-wrap:wrap;gap:1.2cqw 3cqw;font-size:3cqw;color:var(--muted)}
+.meta b{font-family:var(--f-num);font-size:4.2cqw;color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.price{font-family:var(--f-num);font-weight:700;font-size:7cqw;font-variant-numeric:tabular-nums;line-height:1;margin-top:1.6cqw}
+.price small{font-family:var(--f-body);font-size:2.8cqw;font-weight:400;color:var(--muted);margin-left:1cqw}
+
+/* 詳細 */
+.dhero{background:var(--panel);border-radius:3cqw;padding:5cqw;display:flex;flex-direction:column;gap:2cqw;border:.25cqw solid var(--line)}
+.dhero .art{aspect-ratio:16/8;background:var(--bg);border-radius:2cqw;display:grid;place-items:center}
+.dhero .art svg{width:70%}
+.dhero h2{font-family:var(--f-disp);font-weight:400;font-size:7cqw;margin:1cqw 0 0;line-height:1.25;text-wrap:balance}
+.dhero p{margin:0;font-size:3.4cqw;line-height:1.7;color:var(--muted)}
+.dims{display:grid;grid-template-columns:repeat(3,1fr);gap:2cqw}
+.dim{background:var(--ink);color:var(--bg);border-radius:2cqw;padding:3cqw;display:flex;flex-direction:column;gap:.6cqw}
+.dim span{font-size:2.6cqw;letter-spacing:.12em;opacity:.75}
+.dim b{font-family:var(--f-num);font-size:8cqw;line-height:1;font-variant-numeric:tabular-nums}
+.dim b small{font-size:3.2cqw;margin-left:.6cqw}
+.sec h3{font-size:3.4cqw;letter-spacing:.2em;color:var(--muted);margin:0 0 2cqw;font-weight:700}
+.spec{width:100%;border-collapse:collapse;background:var(--panel);border-radius:2cqw;overflow:hidden}
+.spec th,.spec td{text-align:left;padding:2.6cqw 3.5cqw;font-size:3.5cqw;border-bottom:.2cqw solid var(--line)}
+.spec tr:last-child th,.spec tr:last-child td{border-bottom:0}
+.spec th{width:34%;color:var(--muted);font-weight:400}
+.spec td{font-weight:700;font-variant-numeric:tabular-nums}
+.equip{display:grid;grid-template-columns:repeat(2,1fr);gap:2cqw}
+.eq{background:var(--panel);border-radius:2cqw;padding:3cqw 3.5cqw;display:flex;flex-direction:column;gap:.6cqw;border:.25cqw solid var(--line);text-align:left}
+.eq b{font-size:3.6cqw}
+.eq span{font-size:2.8cqw;color:var(--muted);font-family:var(--f-num);font-size:3.6cqw;font-variant-numeric:tabular-nums}
+.eq.off{opacity:.38}
+.ask{background:var(--accent);border-radius:2.4cqw;padding:5cqw;font-family:var(--f-disp);font-size:5.4cqw;text-align:center}
+.ask:active{transform:scale(.98)}
+
+/* 下部ナビ */
+.nav{background:var(--panel);border-top:.3cqw solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:1.6cqw 3cqw calc(1.6cqw + env(safe-area-inset-bottom,0px))}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:.8cqw;padding:2cqw 0;font-size:3cqw;font-weight:700;border-radius:2cqw;color:var(--muted)}
+.nav button[aria-current="true"]{color:var(--ink);background:var(--bg)}
+.nav button:active{background:var(--line)}
+.nav svg{width:7cqw;height:7cqw}
+.nav button[disabled]{opacity:.3}
+
+/* スタッフ呼び出し */
+.overlay{position:absolute;inset:0;background:rgba(19,36,29,.88);display:grid;place-items:center;padding:8cqw;z-index:5}
+.overlay .box{background:var(--bg);border-radius:3cqw;padding:8cqw 6cqw;text-align:center;display:flex;flex-direction:column;gap:3cqw}
+.overlay h2{font-family:var(--f-disp);font-weight:400;font-size:7cqw;margin:0;line-height:1.3}
+.overlay p{margin:0;font-size:3.6cqw;line-height:1.7;color:var(--muted)}
+.overlay button{background:var(--ink);color:var(--bg);border-radius:99px;padding:3cqw;font-size:4cqw;font-weight:700}
+
+.screen{animation:in .25s ease-out}
+@keyframes in{from{transform:translateY(1.5cqw)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.screen,.touch i{animation:none}.tile,.card{transition:none}}
+</style>
+
+<div class="frame" id="frame">
+  <header class="top">
+    <h1>展示車両<b>ガイド</b></h1>
+    <span class="tag" id="tag">見本データで表示中</span>
+  </header>
+  <main id="main"></main>
+  <nav class="nav" id="nav" aria-label="画面の切り替え"></nav>
+  <div class="overlay" id="overlay" hidden>
+    <div class="box">
+      <h2>スタッフが<br>ご案内します</h2>
+      <p id="ovText">近くのスタッフにお声がけください。</p>
+      <button id="ovClose" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== ここを差し替えればイベントごとの内容になる(見本データ) =====
+const NEW_CARS = [
+  {id:'n1', type:'キャブコン', name:'見本モデル A', base:'トヨタ カムロード', price:'1,180', lead:'家族4人で長期旅行に向く、居住性重視のキャブコン。',
+   dims:[4990,2050,2980], ride:7, sleep:'大人4名＋子供1名',
+   spec:{'ベース車':'トヨタ カムロード','エンジン':'2.8L ディーゼル','駆動方式':'4WD','乗車定員':'7名','就寝定員':'大人4名＋子供1名','車両総重量':'3,450kg'},
+   equip:{'FFヒーター':'4kW','サブバッテリー':'リチウム 200Ah','走行充電':'あり','外部電源':'AC100V','インバーター':'1,500W','冷蔵庫':'90L','シンク・給排水':'各20L','ソーラーパネル':'200W','エアコン':'家庭用','常設2段ベッド':'あり'}},
+  {id:'n2', type:'バンコン', name:'見本モデル B', base:'トヨタ ハイエース スーパーロング', price:'780', lead:'普段使いもしやすいバンコン。立体駐車場は不可。',
+   dims:[5380,1880,2285], ride:7, sleep:'大人3名',
+   spec:{'ベース車':'トヨタ ハイエース スーパーロング','エンジン':'2.8L ディーゼル','駆動方式':'4WD','乗車定員':'7名','就寝定員':'大人3名','車両総重量':'3,120kg'},
+   equip:{'FFヒーター':'2kW','サブバッテリー':'リチウム 150Ah','走行充電':'あり','外部電源':'AC100V','インバーター':'1,500W','冷蔵庫':'40L','シンク・給排水':'各10L','ソーラーパネル':'100W','エアコン':null,'常設2段ベッド':null}},
+  {id:'n3', type:'軽キャンパー', name:'見本モデル C', base:'スズキ エブリイ', price:'360', lead:'ひとり旅・夫婦旅向け。維持費をおさえたい方に。',
+   dims:[3395,1475,1910], ride:4, sleep:'大人2名',
+   spec:{'ベース車':'スズキ エブリイ','エンジン':'660cc ガソリン','駆動方式':'2WD / 4WD','乗車定員':'4名','就寝定員':'大人2名','車両総重量':'1,250kg'},
+   equip:{'FFヒーター':null,'サブバッテリー':'鉛 105Ah','走行充電':'あり','外部電源':'AC100V','インバーター':'300W','冷蔵庫':'15L(ポータブル)','シンク・給排水':null,'ソーラーパネル':null,'エアコン':null,'常設2段ベッド':null}},
+];
+const USED_CARS = [
+  {id:'u1', type:'キャブコン', name:'見本中古 D', base:'トヨタ カムロード', year:2019, km:48200, price:'690', store:'A店', dims:[4990,2050,2980], ride:6, sleep:'大人4名',
+   spec:{'年式':'2019年','走行距離':'48,200km','車検':'2027年3月','修復歴':'なし','ベース車':'トヨタ カムロード','就寝定員':'大人4名'},
+   equip:{'FFヒーター':'4kW','サブバッテリー':'鉛 105Ah×2','走行充電':'あり','外部電源':'AC100V','インバーター':'1,000W','冷蔵庫':'85L','シンク・給排水':'各20L','ソーラーパネル':'100W','エアコン':null,'常設2段ベッド':'あり'}},
+  {id:'u2', type:'バンコン', name:'見本中古 E', base:'トヨタ ハイエース', year:2021, km:31500, price:'560', store:'B店', dims:[4840,1880,2105], ride:5, sleep:'大人2名',
+   spec:{'年式':'2021年','走行距離':'31,500km','車検':'2026年12月','修復歴':'なし','ベース車':'トヨタ ハイエース','就寝定員':'大人2名'},
+   equip:{'FFヒーター':'2kW','サブバッテリー':'リチウム 100Ah','走行充電':'あり','外部電源':'AC100V','インバーター':'1,500W','冷蔵庫':'40L','シンク・給排水':'各10L','ソーラーパネル':null,'エアコン':null,'常設2段ベッド':null}},
+  {id:'u3', type:'軽キャンパー', name:'見本中古 F', base:'ダイハツ ハイゼット', year:2020, km:62800, price:'210', store:'A店', dims:[3395,1475,1990], ride:4, sleep:'大人2名',
+   spec:{'年式':'2020年','走行距離':'62,800km','車検':'2027年6月','修復歴':'なし','ベース車':'ダイハツ ハイゼット','就寝定員':'大人2名'},
+   equip:{'FFヒーター':null,'サブバッテリー':'鉛 105Ah','走行充電':'あり','外部電源':'AC100V','インバーター':'300W','冷蔵庫':null,'シンク・給排水':null,'ソーラーパネル':null,'エアコン':null,'常設2段ベッド':null}},
+  {id:'u4', type:'キャブコン', name:'見本中古 G', base:'いすゞ エルフ', year:2017, km:71300, price:'820', store:'C店', dims:[6990,2180,3100], ride:8, sleep:'大人6名',
+   spec:{'年式':'2017年','走行距離':'71,300km','車検':'2026年11月','修復歴':'なし','ベース車':'いすゞ エルフ','就寝定員':'大人6名'},
+   equip:{'FFヒーター':'5kW','サブバッテリー':'リチウム 300Ah','走行充電':'あり','外部電源':'AC100V','インバーター':'3,000W','冷蔵庫':'100L','シンク・給排水':'各40L','ソーラーパネル':'300W','エアコン':'家庭用','常設2段ベッド':'あり'}},
+];
+const IDLE_SECONDS = 90; // 触られないとホームに戻る
+// ================================================================
+
+const TYPES = ['すべて','キャブコン','バンコン','軽キャンパー'];
+const $ = s => document.querySelector(s);
+const main = $('#main');
+const fmt = n => n.toLocaleString('ja-JP');
+
+// 車体タイプ別のシルエット
+function art(type){
+  const w = `<circle cx="70" cy="112" r="15" fill="#13241D"/><circle cx="70" cy="112" r="6" fill="#E8EDE9"/>`;
+  const wheel = x => w.replaceAll('cx="70"', `cx="${x}"`);
+  let body;
+  if(type==='キャブコン') body = `<path d="M18 104 V52 Q18 40 30 40 H74 V18 Q74 10 82 10 H206 Q214 10 214 18 V104 Z" fill="#13241D"/><path d="M24 60 L40 46 H70 V64 H24 Z" fill="#E8EDE9"/><rect x="104" y="30" width="38" height="24" rx="3" fill="#F0B323"/><rect x="156" y="30" width="38" height="24" rx="3" fill="#E8EDE9"/>`;
+  else if(type==='バンコン') body = `<path d="M14 104 V66 L40 34 Q44 28 52 28 H206 Q214 28 214 36 V104 Z" fill="#13241D"/><path d="M28 64 L46 40 H74 V64 Z" fill="#E8EDE9"/><rect x="104" y="42" width="44" height="22" rx="3" fill="#F0B323"/><rect x="160" y="42" width="40" height="22" rx="3" fill="#E8EDE9"/>`;
+  else body = `<path d="M44 104 V58 L60 30 Q63 24 70 24 H182 Q190 24 190 32 V104 Z" fill="#13241D"/><path d="M58 60 L70 36 H94 V60 Z" fill="#E8EDE9"/><rect x="112" y="38" width="62" height="22" rx="3" fill="#F0B323"/>`;
+  const wx = type==='軽キャンパー' ? [78,162] : [62,180];
+  return `<svg viewBox="0 0 230 130" aria-hidden="true">${body}${wheel(wx[0])}${wheel(wx[1])}<rect x="6" y="126" width="218" height="3" rx="1.5" fill="#C6D1CA"/></svg>`;
+}
+
+const ICON = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7v9H5v-9"/></svg>',
+  new:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16V9h9V5h9a2 2 0 0 1 2 2v9z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>',
+  used:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>',
+};
+
+let state = {view:'home', filter:'すべて', sort:'price'};
+const history = [];
+function go(next){ history.push(state); state = {...state, ...next}; render(); }
+function back(){ if(history.length){ state = history.pop(); render(); } }
+
+function home(){
+  return `<section class="hero">
+      <span class="eyebrow">TOUCH TO EXPLORE</span>
+      <h2>気になる一台を、<br>さわって比べる。</h2>
+      <p>サイズ・定員・装備をこの画面でご覧いただけます。</p>
+    </section>
+    <div class="tiles">
+      <button class="tile new" data-go="new"><div><div class="k">NEW</div><div class="t">新車<br>ラインナップ</div></div><div class="n">${NEW_CARS.length}<small>車種</small></div>${art('キャブコン')}</button>
+      <button class="tile used" data-go="used"><div><div class="k">USED</div><div class="t">中古車<br>在庫</div></div><div class="n">${USED_CARS.length}<small>台</small></div>${art('バンコン')}</button>
+    </div>
+    <div class="touch"><i></i>画面にタッチしてください</div>`;
+}
+
+function card(c, used){
+  const meta = used
+    ? `<span><b>${c.year}</b> 年式</span><span><b>${fmt(c.km)}</b> km</span><span>${c.store}</span>`
+    : `<span>乗車 <b>${c.ride}</b> 名</span><span>就寝 ${c.sleep}</span>`;
+  return `<button class="card" data-car="${c.id}">
+    <div class="thumb">${art(c.type)}</div>
+    <div><div class="type">${c.type} ／ ${c.base}</div><div class="name">${c.name}</div>
+      <div class="meta">${meta}</div>
+      <div class="price">${c.price}<small>万円(税込)</small></div></div>
+  </button>`;
+}
+
+function list(used){
+  let cars = used ? USED_CARS : NEW_CARS;
+  if(state.filter!=='すべて') cars = cars.filter(c=>c.type===state.filter);
+  if(used) cars = [...cars].sort((a,b)=> state.sort==='price' ? parseFloat(a.price.replace(',',''))-parseFloat(b.price.replace(',','')) : b.year-a.year);
+  const chips = TYPES.map(t=>`<button class="chip" data-filter="${t}" aria-pressed="${state.filter===t}">${t}</button>`).join('');
+  const sorts = used ? `<div class="chips"><button class="chip" data-sort="price" aria-pressed="${state.sort==='price'}">価格の安い順</button><button class="chip" data-sort="year" aria-pressed="${state.sort==='year'}">年式の新しい順</button></div>` : '';
+  return `<div class="head"><span class="eyebrow">${used?'USED':'NEW'}</span><h2>${used?'中古車在庫':'新車ラインナップ'}</h2></div>
+    <div class="chips">${chips}</div>${sorts}
+    <div class="list">${cars.map(c=>card(c,used)).join('') || '<p>この条件の車両はありません。上のボタンで条件を変えてください。</p>'}</div>`;
+}
+
+function detail(id){
+  const used = id.startsWith('u');
+  const c = (used?USED_CARS:NEW_CARS).find(x=>x.id===id);
+  const dim = (l,v)=>`<div class="dim"><span>${l}</span><b>${fmt(v)}<small>mm</small></b></div>`;
+  return `<section class="dhero">
+      <div class="art">${art(c.type)}</div>
+      <div class="type" style="font-size:2.8cqw;letter-spacing:.12em;color:var(--muted)">${c.type} ／ ${used?c.store+'在庫':'新車'}</div>
+      <h2>${c.name}</h2>
+      ${c.lead?`<p>${c.lead}</p>`:''}
+      <div class="price">${c.price}<small>万円(税込)</small></div>
+    </section>
+    <div class="dims">${dim('全長',c.dims[0])}${dim('全幅',c.dims[1])}${dim('全高',c.dims[2])}</div>
+    <section class="sec"><h3>諸元</h3><table class="spec">${Object.entries(c.spec).map(([k,v])=>`<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table></section>
+    <section class="sec"><h3>装備(薄い表示は装備なし)</h3><div class="equip">${Object.entries(c.equip).map(([k,v])=>`<div class="eq ${v?'':'off'}"><b>${k}</b><span>${v||'なし'}</span></div>`).join('')}</div></section>
+    <button class="ask" data-ask="${c.name}">この車についてスタッフに聞く</button>`;
+}
+
+function render(){
+  main.innerHTML = `<div class="screen" style="display:flex;flex-direction:column;gap:4cqw">${
+    state.view==='home'?home(): state.view==='new'?list(false): state.view==='used'?list(true): detail(state.view)}</div>`;
+  main.scrollTop = 0;
+  const cur = state.view.startsWith('n')&&state.view!=='new' ? 'new' : state.view.startsWith('u')&&state.view!=='used' ? 'used' : state.view;
+  $('#nav').innerHTML = [['home','ホーム'],['new','新車'],['used','中古車']].map(([v,l])=>
+    `<button data-go="${v}" aria-current="${cur===v}">${ICON[v]}${l}</button>`).join('')
+    + `<button data-back ${history.length?'':'disabled'}>${ICON.back}戻る</button>`;
+}
+
+document.getElementById('frame').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.go){ if(b.dataset.go!==state.view) go({view:b.dataset.go, filter:'すべて'}); }
+  else if(b.dataset.car) go({view:b.dataset.car});
+  else if(b.dataset.filter) { state.filter=b.dataset.filter; render(); }
+  else if(b.dataset.sort) { state.sort=b.dataset.sort; render(); }
+  else if('back' in b.dataset) back();
+  else if(b.dataset.ask){ $('#ovText').textContent = `「${b.dataset.ask}」について、近くのスタッフにお声がけください。`; $('#overlay').hidden=false; }
+  else if(b.id==='ovClose') $('#overlay').hidden=true;
+});
+
+// 長押しメニュー・ピンチ拡大を止める(展示用)
+document.addEventListener('contextmenu', e=>e.preventDefault());
+document.addEventListener('gesturestart', e=>e.preventDefault());
+
+// 一定時間触られなければホームへ戻す
+let idle;
+function resetIdle(){ clearTimeout(idle); idle = setTimeout(()=>{ history.length=0; state={view:'home',filter:'すべて',sort:'price'}; $('#overlay').hidden=true; render(); }, IDLE_SECONDS*1000); }
+['pointerdown','keydown'].forEach(t=>document.addEventListener(t, resetIdle));
+
+render(); resetIdle();
+
+// 最初のタッチで全画面にする(アドレスバーを隠す)
+document.addEventListener('pointerdown', ()=>{
+  const d = document.documentElement;
+  if(!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen().catch(()=>{});
+});
+
+// ネットがなくても動くよう、画面とフォントをブラウザに保存する
+const tag = document.getElementById('tag');
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js')
+    .then(()=>navigator.serviceWorker.ready)
+    .then(()=>{ tag.textContent = '見本データ／オフライン可'; })
+    .catch(()=>{ tag.textContent = '見本データ／オフライン不可'; });
+} else {
+  tag.textContent = '見本データ／オフライン不可';
+}
+</script>
