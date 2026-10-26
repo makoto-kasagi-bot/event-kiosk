@@ -206,8 +206,8 @@ function art(type){
   return `<svg viewBox="0 0 230 130" aria-hidden="true">${body}${wheel(wx[0])}${wheel(wx[1])}<rect x="6" y="126" width="218" height="3" rx="1.5" fill="#C6D1CA"/></svg>`;
 }
 
-let PHOTOS = {}; // 写真のファイル名 → 表示用URL
-const pic = c => PHOTOS[c.photo] ? `<img src="${PHOTOS[c.photo]}" alt="">` : art(c.type);
+let PHOTOS = new Map(); // 写真のファイル名 → 表示用URL
+const pic = c => c.photo && PHOTOS.has(c.photo) ? `<img src="${PHOTOS.get(c.photo)}" alt="">` : art(c.type);
 
 const ICON = {
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7v9H5v-9"/></svg>',
@@ -303,7 +303,7 @@ document.addEventListener('gesturestart', e=>e.preventDefault());
 
 // 一定時間触られなければホームへ戻す
 let idle;
-function resetIdle(){ clearTimeout(idle); idle = setTimeout(()=>{ history.length=0; state={view:'home',filter:'すべて',sort:'price'}; $('#overlay').hidden=true; $('#admin').hidden=true; render(); }, IDLE_SECONDS*1000); }
+function resetIdle(){ clearTimeout(idle); idle = setTimeout(()=>{ if(!$('#admin').hidden) return resetIdle(); history.length=0; state={view:'home',filter:'すべて',sort:'price'}; $('#overlay').hidden=true; $('#admin').hidden=true; render(); }, IDLE_SECONDS*1000); }
 ['pointerdown','keydown'].forEach(t=>document.addEventListener(t, resetIdle));
 
 render(); resetIdle();
@@ -337,11 +337,14 @@ const DB = new Promise((ok, ng)=>{
 });
 const dbDo = (mode, fn) => DB.then(db => new Promise((ok, ng)=>{
   const t = db.transaction('kv', mode); const req = fn(t.objectStore('kv'));
-  t.oncomplete = ()=> ok(req && req.result); t.onerror = ()=> ng(t.error); t.onabort = ()=> ng(t.error);
+  const fail = ()=> ng(t.error || (req && req.error) || new Error('保存できませんでした'));
+  t.oncomplete = ()=> ok(req && req.result); t.onerror = fail; t.onabort = fail;
 }));
+// データと写真は 'saved' の1つのキーにまとめて保存する(片方だけ書けた半端な状態を残さない)
 const dbGet = k => dbDo('readonly', s => s.get(k));
 const dbPut = (k, v) => dbDo('readwrite', s => s.put(v, k));
 const dbDel = k => dbDo('readwrite', s => s.delete(k));
+const fileKey = n => String(n).normalize('NFC').toLowerCase();
 
 const esc = v => typeof v === 'string' ? v.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
   : Array.isArray(v) ? v.map(esc) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k,x])=>[esc(k), esc(x)])) : v;
@@ -354,15 +357,15 @@ function normalize(list, prefix){
     return {...c, id: prefix + (i+1), type: c.type || '', name: c.name || '(名前なし)', base: c.base || '',
       price: String(c.price ?? ''), dims, spec: c.spec || {}, equip: c.equip || {},
       year: Number(c.year) || '', km: Number(c.km) || 0, store: c.store || '', sleep: c.sleep || '', ride: c.ride || '',
-      photo: raw && raw.photo || ''};
+      photo: raw && raw.photo ? fileKey(raw.photo) : ''};
   });
 }
 
 function applyData(data, photos){
-  Object.values(PHOTOS).forEach(u => URL.revokeObjectURL(u));
-  PHOTOS = {};
+  PHOTOS.forEach(u => URL.revokeObjectURL(u));
+  PHOTOS = new Map();
   if(data){
-    for(const [name, blob] of Object.entries(photos || {})) PHOTOS[name] = URL.createObjectURL(blob);
+    for(const [name, blob] of Object.entries(photos || {})) PHOTOS.set(name, URL.createObjectURL(blob));
     NEW_CARS = data.newCars; USED_CARS = data.usedCars;
     dataLabel = data.asOf ? data.asOf + '時点' : '読み込んだデータ';
   } else {
@@ -374,7 +377,7 @@ function applyData(data, photos){
 
 function showAdminState(data, photos){
   $('#adminState').innerHTML = data
-    ? `いま表示中: ${data.asOf || '日付なし'}のデータ<br>新車${data.newCars.length}件・中古車${data.usedCars.length}件・写真${Object.keys(photos||{}).length}枚`
+    ? `いま表示中: ${esc(data.asOf) || '日付なし'}のデータ<br>新車${data.newCars.length}件・中古車${data.usedCars.length}件・写真${Object.keys(photos||{}).length}枚`
     : 'いま表示中: 見本データ';
 }
 
@@ -403,14 +406,15 @@ async function importFiles(files){
   let raw;
   try { raw = JSON.parse(await json.text()); }
   catch(e){ msg.className = 'err'; msg.textContent = `${json.name} を読めませんでした。ファイルの書き方が崩れていないか確認してください。\n(${e.message})`; return; }
-  const data = {asOf: esc(String(raw.asOf || '')), newCars: normalize(raw.newCars, 'n'), usedCars: normalize(raw.usedCars, 'u')};
+  // asOf は文字として表示するだけなのでエスケープしない(表示する側で扱う)
+  const data = {asOf: String(raw.asOf || ''), newCars: normalize(raw.newCars, 'n'), usedCars: normalize(raw.usedCars, 'u')};
   if(!data.newCars.length && !data.usedCars.length){ msg.className = 'err'; msg.textContent = `${json.name} に車両が1台も入っていません。newCars か usedCars に車両を入れてください。`; return; }
   const photos = {}, broken = [];
   for(const f of files.filter(f => f.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(f.name))){
-    const b = await shrink(f); if(b) photos[f.name] = b; else broken.push(f.name);
+    const b = await shrink(f); if(b) photos[fileKey(f.name)] = b; else broken.push(f.name);
   }
-  const missing = [...data.newCars, ...data.usedCars].map(c => c.photo).filter(n => n && !photos[n]);
-  try { await dbPut('data', data); await dbPut('photos', photos); }
+  const missing = [...data.newCars, ...data.usedCars].map(c => c.photo).filter(n => n && !Object.prototype.hasOwnProperty.call(photos, n));
+  try { await dbPut('saved', {data, photos}); }
   catch(e){ msg.className = 'err'; msg.textContent = `ブラウザに保存できませんでした。写真の枚数を減らして、もう一度読み込んでください。\n(${e && e.message || e})`; return; }
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   applyData(data, photos);
@@ -420,9 +424,11 @@ async function importFiles(files){
 }
 
 async function resetSample(){
-  try { await dbDel('data'); await dbDel('photos'); } catch(_){}
+  const msg = $('#adminMsg');
+  try { await dbDel('saved'); }
+  catch(e){ msg.className = 'err'; msg.textContent = `保存したデータを消せませんでした。ブラウザを開き直して、もう一度押してください。\n(${e && e.message || e})`; return; }
   applyData(null);
-  $('#adminMsg').className = ''; $('#adminMsg').textContent = '見本データに戻しました。';
+  msg.className = ''; msg.textContent = '見本データに戻しました。';
 }
 
 $('#usbFiles').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; if(fs.length) importFiles(fs); });
@@ -434,7 +440,7 @@ logo.addEventListener('pointerdown', () => { press = setTimeout(() => { $('#over
 ['pointerup','pointerleave','pointercancel'].forEach(t => logo.addEventListener(t, () => clearTimeout(press)));
 
 // 前に読み込んだデータがあれば、それを表示する
-Promise.all([dbGet('data'), dbGet('photos')])
-  .then(([data, photos]) => { if(data) applyData(data, photos); else showAdminState(null); })
+dbGet('saved')
+  .then(saved => { if(saved && saved.data) applyData(saved.data, saved.photos); else showAdminState(null); })
   .catch(() => { showAdminState(null); $('#adminMsg').textContent = 'このブラウザはデータを保存できません。読み込んでも、再起動すると見本データに戻ります。'; });
 </script>
