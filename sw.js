@@ -1,5 +1,5 @@
 // 画面とフォントを保存し、会場でネットがなくても表示できるようにする
-const CACHE = 'kiosk-v1';
+const CACHE = 'kiosk-v2';
 const FONT_CSS = 'https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;700&family=Barlow+Condensed:wght@500;700&display=swap';
 
 self.addEventListener('install', e => {
